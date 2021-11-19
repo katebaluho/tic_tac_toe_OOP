@@ -1,29 +1,41 @@
+from SessionMixin import SessionMixin
+from terminal_params import TERMINAL_PARAMS, read_terminal
 from board import Board
 from constants import MODES, BOARD_SIZE, END_GAME
 from game import TicTacToe
-from logger import Logger
-from  player import Gamer, Player
+from player import Gamer, Player
 
+import logger
 
-class Lobby:
+log = logger.get_logger(__name__)
+read_terminal()
 
-    def __init__(self, mode = None, users = None, round = 1, game_name = TicTacToe):
+class Lobby(SessionMixin):
+
+    def __init__(self, session = 0, mode = None, users = None, round = 1, game_name = TicTacToe):
+        self.session = session if session else self.update_session()
         self.mode = self.get_mode(mode)
         self.users = self.get_users(users)
         self.board = Board(BOARD_SIZE)
-       # self.logger = logger
         self.round = round
         self.game = game_name(self.users, self.board)
+        log.info(f'Session #{self.session} - round #{self.round} - MODE {self.mode}')
 
     def get_users(self, users):
         if users:
             return users
+        users = TERMINAL_PARAMS['users']
+        if users:
+            return (Gamer('X', users[0]), Gamer('O', users[1])) if self.mode == MODES[1] else (Gamer('X', users[0]), Player('O'))
         return (Gamer('X'), Gamer('O')) if self.mode == MODES[1] else (Gamer('X'), Player('O'))
 
 
     def get_mode(self, mode):
         if mode:
             return mode
+
+        if TERMINAL_PARAMS['mode']:
+            return TERMINAL_PARAMS['mode']
 
         user_modes = {idx: itm for idx, itm in enumerate(MODES, 1)}
         modes_str = "\n".join(f"{key}: {value}" for key, value in user_modes.items())
@@ -50,7 +62,7 @@ class Lobby:
 
 
     def params_for_restart(self):
-        return (self.logger, self.mode, self.users, self.round+1)
+        return (self.session, self.mode, self.users, self.round+1)
 
 
 if __name__ == '__main__':

@@ -40,9 +40,3 @@ class Gamer(Player):
                 print("Ошибка ввода, повторите")
                 continue
             return result
-
-if __name__ == '__main__':
-    board = Board(3)
-    user = Gamer("X")
-    user.get_step(board)
-    print(1)

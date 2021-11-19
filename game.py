@@ -1,7 +1,6 @@
 from itertools import cycle
-from os import path
-
-from logger import Logger
+import logger
+log = logger.get_logger(__name__)
 
 class TicTacToe():
 
@@ -9,7 +8,7 @@ class TicTacToe():
         self.users = users
         self.board = board
 
-    @Logger.to_file("STEP_GAME")
+
     def step_player(self, player, step_num):
         while True:
             try:
@@ -25,24 +24,20 @@ class TicTacToe():
 
 
     def match_game(self, player, step_num):
+        result_game = ''
         if self.board.chek_board():
-            print(f"Победил игрок {player.symbol} : {player.name}")
-            return player.name
+            result_game = f"Победил игрок {player.symbol} : {player.name}"
         if self.board.chek_draw(step_num):
-            print(f"Итог игры НИЧЬЯ")
-            return "DRAW"
-        return None
+            result_game = f"Итог игры НИЧЬЯ"
+        return result_game
 
     def run(self):
-        #names = [el.name for el in self.users]
-       # self.logger.log_message("INIT_GAME", self.round, self.mode, *names,datetime.now().ctime())
-
         print(self.board)
         for step_num, player in enumerate(cycle(self.users),1):
             step = self.step_player(player, step_num)
-           # self.logger.log_message("GAME_STEP", self.round, player.name, step_num, *step)
-
+            log.info(f'Игрок {player.name}. Ход {step}')
             result_game = self.match_game(player, step_num)
             if result_game:
-                #self.logger.log_message("END_GAME", self.round, player.name, result_game)
+                print(result_game)
+                log.info(result_game)
                 return result_game

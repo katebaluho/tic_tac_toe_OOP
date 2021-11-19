@@ -67,13 +67,3 @@ class Board:
         title_row = f'##{"#".join(map(str, range(len(board_view))))}#'
         str_rows = "\n".join(map(lambda itm: f"{itm[0]}#{'|'.join(map(str, itm[1]))}#", enumerate(board_view)))
         return f"{title_row}\n{str_rows}\n{'#' * len(title_row)}"
-
-
-if __name__ == '__main__':
-    board_view = Board(3)
-    board_view.add_step((0, 0), "X")
-    board_view.add_step((0, 1), "X")
-    board_view.add_step((0, 2), "X")
-    win = board_view.chek_board()
-    board_view.print_board()
-    print(board_view)
