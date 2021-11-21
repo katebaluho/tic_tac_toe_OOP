@@ -1,67 +1,69 @@
 from random import randint
+from collections import defaultdict
+from itertools import chain
+
 
 class Board:
 
-
     def __init__(self, size):
-        self.size = size
-        self.all_steps = set((n, m) for n in range(self.size) for m in range(self.size))
-        self.done_steps = set()
-        self.signs_on_board = [[0 for _ in range(self.size)] for _ in range(self.size)]
+        self.__size = size
+        self.done_steps = defaultdict(set)
+
+    def size(self):
+        return self.__size
+
+    def get_win_variants(self):
+        variants_diagonal = (
+            ((i, j) for i, j in zip(range(self.__size), range(self.__size - 1, -1, -1))),
+            ((i, i) for i in range(self.__size)),
+        )
+
+        for variant in variants_diagonal:
+            yield variant
+
+        variants = (
+            (((i, j) for j in range(self.__size)) for i in range(self.__size)),
+            (((j, i) for j in range(self.__size)) for i in range(self.__size)),
+        )
+        for itm in variants:
+            yield from itm
 
     def print_board(self):
-        col_numbers = "##" + "#".join(f"{item}" for item in range(self.size)) + "#"
-        print(col_numbers)
-        for idx, row in enumerate(self.signs_on_board):
-            print(f'{idx}#{"|".join(f"{item}" for item in row)}#')
-        print("#" * len(col_numbers))
+        print(self)
 
-    def add_step(self, step: tuple[int, int], sign = str):
-        try:
-            if step not in self.all_steps or step in self.done_steps:
-                raise Exception
-            self.done_steps.add(step)
-            self.signs_on_board[step[0]][step[1]] = sign
-            return True
-        except Exception:
-            print('Ячейка не существует или уже занята')
-        return False
+    def add_step(self, step: tuple[int, int], user):
+        if (
+                all(map(lambda x: 0 <= x < self.__size, step))
+                and (not any(map(lambda user_steps: step in user_steps, self.done_steps.values())))
+        ):
+            self.done_steps[user].add(tuple(step))
+        else:
+            raise ValueError("Сюда ходить нельзя")
 
-    def chek(self, sign) -> str:
-
-        if len(self.done_steps) == self.size ** 2:
-            return 'Ничья'
-
-        self.diagonal = tuple(map(lambda idx: self.signs_on_board[idx][idx], range(0, self.size)))
-        self.invert_diagonal = tuple(map(lambda idx: self.signs_on_board[idx][self.size - idx - 1], range(self.size - 1, -1, -1)))
-        self.columns = (_ for _ in zip(*self.signs_on_board))
-        self.rows = ( _ for _ in self.signs_on_board)
-
-        def chek_line(line):
-            line_set = set(line)
-            if (0 not in line_set and len(line_set) == 1):
-                raise ValueError("CHECK_LINE")
-            return False
-
-        try:
-            _ = any(map(chek_line, (self.diagonal, self.invert_diagonal, *self.rows, *self.columns)))
-        except ValueError as exc:
-            if 'CHECK_LINE' in exc.args:
-                return sign
-            else:
-                raise exc
+    def chek_board(self):
+        variants = ((wl, usr, usr_st) for usr, usr_st in self.done_steps.items() for wl in self.get_win_variants())
+        for win_line, user, user_steps in variants:
+            if not set(win_line).difference(user_steps):
+                return user
+        # for win_line in self.get_win_variants():
+        #     print(set(win_line))
+        #     for user, user_steps in self.done_steps.items():
+        #         if not set(win_line).difference(user_steps):
+        #             return user
         return None
 
+    def chek_draw(self, step_num):
+        return True if step_num == self.__size ** 2 else False
 
+    def free_cells(self):
+        all_steps = {(i, j) for i in range(self.__size) for j in range(self.__size)}
+        return all_steps.difference({itm for itm in chain(*self.done_steps.values())})
 
-created = Board(3)
-
-created.print_board()
-coord_x, coord_y = 1,1
-created.add_step((coord_x,coord_y), 'X')
-coord_x, coord_y =2,2
-created.add_step((coord_x,coord_y), 'X')
-coord_x, coord_y =0,0
-created.add_step((coord_x,coord_y), 'X')
-created.print_board()
-print("Победа "+ created.chek("X"))
+    def __str__(self):
+        board_view = [[0 for _ in range(self.__size)] for _ in range(self.__size)]
+        for user, steps in self.done_steps.items():
+            for step in steps:
+                board_view[step[0]][step[1]] = user
+        title_row = f'##{"#".join(map(str, range(len(board_view))))}#'
+        str_rows = "\n".join(map(lambda itm: f"{itm[0]}#{'|'.join(map(str, itm[1]))}#", enumerate(board_view)))
+        return f"{title_row}\n{str_rows}\n{'#' * len(title_row)}"
